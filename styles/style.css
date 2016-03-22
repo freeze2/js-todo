@@ -1,0 +1,7 @@
+.element-task-done {
+}
+
+.element-task-done span{
+  text-decoration: line-through;
+  color: #666;
+}
