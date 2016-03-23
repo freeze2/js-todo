@@ -4,8 +4,8 @@
 
   var TodoElement = function (container_id) {
     this.container = document.getElementById(container_id);
-    this.taskList = [];
-    this.itemCounter = 0;
+    this.taskList = JSON.parse(localStorage.getItem("todo_list")) || [];
+    this.itemCounter = localStorage.getItem("items_counter") || 0;
   };
 
   TodoElement.prototype = {
@@ -21,17 +21,18 @@
         a = a.name.toLowerCase();
         b = b.name.toLowerCase();
 
-        return (a < b) ? -1 : (a > b) ? 1 : 0;
+        return (a < b) ? 1 : (a > b) ? -1 : 0;
       });
 
-      //console.log(this.taskList);
+      this.addToStorage(this.taskList);
+
+      input.value = '';
     },
 
     renderTasks: function (ul) {
       ul.innerHTML = '';
       for(var i = 0; i < this.taskList.length; i += 1){
         var currentItem = document.createElement('li');
-            //doneClass    = this.taskList[i].done ? 'element-task-done' : '';
         this.taskList[i].done ? currentItem.className = 'element-task-done' : null;
         currentItem.innerHTML = '<span>' + this.taskList[i].name + '</span>';
         currentItem.innerHTML += ' <a href="#" class="done-task done-' + this.taskList[i].id + '">task done</a>';
@@ -41,8 +42,9 @@
       }
     },
 
-    editTask: function () {
-
+    addToStorage: function (listArray) {
+      localStorage.setItem("todo_list", JSON.stringify(listArray));
+      localStorage.setItem("items_counter", this.itemCounter);
     },
 
     init: function(){
@@ -58,12 +60,12 @@
       this.container.appendChild(addTaskInput);
       this.container.appendChild(addTaskButton);
 
+      if (this.taskList) this.renderTasks(ul);
+
       var self = this;
 
       document.querySelector('body').addEventListener('click', function(event) {
-        //console.log(event.target.classList);
         var currentLi = event.target.parentNode;
-        //var id = currentLi.childNodes('a')[0].classList[1].match(/\d+/)[0];
 
         if (event.target.tagName.toLowerCase() === 'button') {
           switch (event.target.classList[0]){
@@ -73,18 +75,14 @@
               self.renderTasks(ul);
               break;
             case 'edit-task-button':
-              //currentLi.childNodes[0].innerHTML = currentLi.childNodes[7].value;
-
               for(var j = 0; j < self.taskList.length; j += 1) {
                 if (self.taskList[j].id == currentLi.childNodes[2].classList[1].match(/\d+/)[0])
                   self.taskList[j].name = currentLi.childNodes[7].value;
               }
 
+              self.addToStorage(self.taskList);
               self.renderTasks(ul);
 
-              console.log(currentLi.childNodes[0]);
-
-              //currentLi.className = '';
               break;
           }
         }
@@ -96,19 +94,18 @@
                 if (self.taskList[i].id == event.target.classList[1].match(/\d+/)[0])
                   self.taskList[i].done = true;
               }
+              self.addToStorage(self.taskList);
               self.renderTasks(ul);
               break;
             case 'edit-task':
-             //var currentLi = event.target.parentNode;
-
               if (currentLi.classList[0] == 'element-task-done' || currentLi.classList[0] == 'on-edit')
                 break;
 
               currentLi.className = 'on-edit';
 
               var taskText      = currentLi.childNodes[0].innerHTML,
-                  newTextInput  = document.createElement('input'),
-                  newTextButton = document.createElement('button');
+                newTextInput  = document.createElement('input'),
+                newTextButton = document.createElement('button');
 
               var buttonSaveText = document.createTextNode('save');
               newTextButton.appendChild(buttonSaveText);
@@ -124,6 +121,12 @@
               for(var k = 0; k < self.taskList.length; k += 1) {
                 if (self.taskList[k].id == event.target.classList[1].match(/\d+/)[0])
                   self.taskList.splice(k, 1);
+              }
+              if (self.taskList.length) {
+                self.addToStorage(self.taskList);
+              } else {
+                localStorage.removeItem("todo_list");
+                localStorage.removeItem("items_counter");
               }
               self.renderTasks(ul);
               break;
